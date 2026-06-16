@@ -30,14 +30,55 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 NUMERIC_FEATURES: list[str] = [
     # ex. "duration_months", "credit_amount", "age", ...
+    "duration_months", "credit_amount", "installment_rate_pct_income", "residence_since_years", "age", "n_existing_credits", "n_people_liable"    
 ]
 ORDINAL_FEATURES: dict[str, list[str]] = {
     # ex. "savings_account": ["< 100 DM", "100-500 DM", "500-1000 DM",
     #                         ">= 1000 DM", "unknown / no savings"],
     # Note : l'ordre des modalités encode la sémantique.
+    "checking_account_status": [
+        "<0 DM", 
+        "0 to 200 DM", 
+        ">= 200 DM / salary assignment for at least 1 year", 
+        "no checking account",
+    ], 
+    "credit_history": [
+        "critical account / other credits existing",
+        "delay in paying off in the past", 
+        "existing credits paid back duly till now", 
+        "existing credits paid back duly", 
+        "all credits at this bank paid back duly",
+        "no credits taken / all credits paid back duly",
+    ], 
+    "savings_account": [
+        "unknown / no savings",
+        "< 100 DM",
+        "100 to 500 DM",
+        "500 to 1000 DM",
+        ">= 1000 DM",    
+    ], 
+    "employment_since": [
+        "unemployed",
+        "< 1 year",
+        "1-4 years",
+        "4-7 years",
+        ">= 7 years",
+    ], 
+    "other_debtors": [
+        "co-applicant",
+        "guarantor",
+        "none",
+    ], 
+    "property": [
+        "unknown / no property",
+        "car or other",
+        "building society savings agreement / life insurance",
+        "real estate",
+    ]
 }
 CATEGORICAL_FEATURES: list[str] = [
     # ex. "purpose", "housing", "telephone", ...
+    "purpose", "personal_status_sex", "other_installment_plans", "housing", "job", "telephone", "foreign_worker"
 ]
 TARGET_COLUMN: str = "credit_risk"
 TARGET_MAPPING: dict[str, int] = {"good_credit": 0, "bad_credit": 1}
