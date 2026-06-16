@@ -92,12 +92,18 @@ def load_dataset(path: Path) -> tuple[pd.DataFrame, pd.Series]:
     — sois explicite sur tes choix.
     """
     df = pd.read_csv(path)
-    # TODO (tâche 5 bis — geste « adapter ») : un complément arrive en cours de
-    # mission → data/german_credit_supplement.csv (colonne `customer_segment`,
-    # même ordre de lignes). Charge-le, joins-le ici par position, décide de sa
-    # nature (numérique / ordinale / nominale ?) et ajoute-la à la BONNE liste
-    # de features ci-dessus. N'oublie pas ses ~4 % de manquants.
-    # (À toi de trouver comment charger et joindre ce complément — c'est le geste « adapter ».)
+    
+    if supplement_path is not None and supplement_path.exists():
+        supplement = pd.read_csv(supplement_path)
+        if len(supplement) != len(df):
+            raise ValueError(
+                f"Supplement ({len(supplement)} lignes) ne correspond pas au dataset principal ({len(df)} lignes)"
+            )
+        df = pd.concat(
+            [df.reset_index(drop=True), supplement.rest_index(drop=True)],
+            axis=1,
+        )
+
     y = df[TARGET_COLUMN].map(TARGET_MAPPING)
     if y.isna().any():
         unknown = df.loc[y.isna(), TARGET_COLUMN].unique().tolist()
@@ -110,7 +116,7 @@ def load_dataset(path: Path) -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
-def build_preprocessor() -> ColumnTransformer:
+def build_preprocessor(with_supplement: bool = False) -> Pipeline:
     """Construit le ColumnTransformer.
 
     3 branches :
@@ -143,15 +149,20 @@ def build_preprocessor() -> ColumnTransformer:
             ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
-    return ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, NUMERIC_FEATURES),
-            ("ord", ordinal_pipeline, list(ORDINAL_FEATURES)),
-            ("cat", categorical_pipeline, CATEGORICAL_FEATURES),
-        ],
+
+    transformers = [
+        ("num", numeric_pipeline, NUMERIC_FEATURES),
+        ("ord", ordinal_pipeline, list(ORDINAL_FEATURE)),
+        ("cat", categorical_pipeline, CATEGORIAL_FEATURE),
+    ]
+    
+    col_transformer = ColumnTransformer(
+        transformers = transformers,
         remainder="drop",
-        verbose_feature_names_out=False,
+        verbose_fature_names_out=False
     )
+
+    return Pipeline(steps=[("preprocessor", col_transformer)])
 
 
 def fit_and_save(data_path: Path, output_path: Path) -> None:
@@ -162,8 +173,8 @@ def fit_and_save(data_path: Path, output_path: Path) -> None:
     Le pipeline sera rejoué tel quel sur tout nouveau lot de données.
     """
     X, _y = load_dataset(data_path)
-    preprocessor = build_preprocessor()
-    preprocessor.fit(X)
+    pipeline = build_preprocessor()
+    pipeline.fit(X)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(preprocessor, output_path, compress=3)
     print(f"Pipeline saved → {output_path}")
