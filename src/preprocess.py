@@ -84,7 +84,7 @@ TARGET_COLUMN: str = "credit_risk"
 TARGET_MAPPING: dict[str, int] = {"good_credit": 0, "bad_credit": 1}
 
 
-def load_dataset(path: Path) -> tuple[pd.DataFrame, pd.Series]:
+def load_dataset(path: Path, supplement_path: Path | None = None) -> tuple[pd.DataFrame, pd.Series]:
     """Charge le CSV German Credit et retourne (X, y).
 
     Les features sont sélectionnées d'après les 3 listes définies ci-dessus.
@@ -152,14 +152,14 @@ def build_preprocessor(with_supplement: bool = False) -> Pipeline:
 
     transformers = [
         ("num", numeric_pipeline, NUMERIC_FEATURES),
-        ("ord", ordinal_pipeline, list(ORDINAL_FEATURE)),
-        ("cat", categorical_pipeline, CATEGORIAL_FEATURE),
+        ("ord", ordinal_pipeline, list(ORDINAL_FEATURES)),
+        ("cat", categorical_pipeline, CATEGORICAL_FEATURES),
     ]
     
     col_transformer = ColumnTransformer(
         transformers = transformers,
         remainder="drop",
-        verbose_fature_names_out=False
+        verbose_feature_names_out=False
     )
 
     return Pipeline(steps=[("preprocessor", col_transformer)])
@@ -176,7 +176,7 @@ def fit_and_save(data_path: Path, output_path: Path) -> None:
     pipeline = build_preprocessor()
     pipeline.fit(X)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(preprocessor, output_path, compress=3)
+    joblib.dump(pipeline, output_path, compress=3)
     print(f"Pipeline saved → {output_path}")
 
 
