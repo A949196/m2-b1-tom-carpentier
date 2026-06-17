@@ -83,7 +83,7 @@ def load_dataset(path: Path, supplement_path: Path | None = None) -> tuple[pd.Da
                 f"Supplement ({len(supplement)} lignes) ne correspond pas au dataset principal ({len(df)} lignes)"
             )
         df = pd.concat(
-            [df.reset_index(drop=True), supplement.rest_index(drop=True)],
+            [df.reset_index(drop=True), supplement.reset_index(drop=True)],
             axis=1,
         )
 
