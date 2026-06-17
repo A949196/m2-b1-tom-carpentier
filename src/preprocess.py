@@ -16,26 +16,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
-# ---------------------------------------------------------------------------
-# TODO 1 — Remplir les 3 listes de features à partir de ton EDA
-# ---------------------------------------------------------------------------
-# Une feature peut être :
-#   • Numérique continue          → NUMERIC_FEATURES
-#   • Catégorielle ordonnée       → ORDINAL_FEATURES (modalités à ordonner)
-#   • Catégorielle non ordonnée   → CATEGORICAL_FEATURES (faible cardinalité)
-#
-# Décide en regardant le notebook (distribution, sens métier).
-# Tu peux exclure des features (ex. variable sensible évidente) — argumente
-# ce choix dans ton notebook ET ton audit.md.
-
 NUMERIC_FEATURES: list[str] = [
-    # ex. "duration_months", "credit_amount", "age", ...
     "duration_months", "credit_amount", "installment_rate_pct_income", "residence_since_years", "age", "n_existing_credits", "n_people_liable"    
 ]
 ORDINAL_FEATURES: dict[str, list[str]] = {
-    # ex. "savings_account": ["< 100 DM", "100-500 DM", "500-1000 DM",
-    #                         ">= 1000 DM", "unknown / no savings"],
-    # Note : l'ordre des modalités encode la sémantique.
     "checking_account_status": [
         "<0 DM", 
         "0 to 200 DM", 
@@ -77,7 +61,6 @@ ORDINAL_FEATURES: dict[str, list[str]] = {
     ]
 }
 CATEGORICAL_FEATURES: list[str] = [
-    # ex. "purpose", "housing", "telephone", ...
     "purpose", "personal_status_sex", "other_installment_plans", "housing", "job", "telephone", "foreign_worker"
 ]
 TARGET_COLUMN: str = "credit_risk"
@@ -109,6 +92,8 @@ def load_dataset(path: Path, supplement_path: Path | None = None) -> tuple[pd.Da
         unknown = df.loc[y.isna(), TARGET_COLUMN].unique().tolist()
         raise ValueError(f"Cible non mappée : {unknown}")
     all_features = NUMERIC_FEATURES + list(ORDINAL_FEATURES) + CATEGORICAL_FEATURES
+    if supplement_path is not None and supplement_path.exists():
+        all_features = all_features + ["customer_segment"]
     missing = [c for c in all_features if c not in df.columns]
     if missing:
         raise KeyError(f"Colonnes attendues absentes du CSV : {missing}")
@@ -162,15 +147,30 @@ def build_preprocessor(with_supplement: bool = False) -> Pipeline:
         verbose_feature_names_out=False
     )
 
+    # T5 bis - customer_segment : ordinale
+
+    if with_supplement:
+        segment_pipe = Pipeline(steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("ordinal", OrdinalEncoder(
+                categories=[["basic", "plus", "premium", "private"]],
+                handle_unknown="use_encoded_value",
+                unknown_value=-1,
+            )),
+        ])
+        transformers.append(("seg", segment_pipe, ["customer_segment"]))
+
+    col_transformer = ColumnTransformer(
+        transformers=transformers,
+        remainder="drop",
+        verbose_feature_names_out=False
+    )
+
     return Pipeline(steps=[("preprocessor", col_transformer)])
 
 
 def fit_and_save(data_path: Path, output_path: Path) -> None:
     """Fit le pipeline sur tout le dataset et sauve avec joblib.
-
-    Note : on fit ici sur tout le dataset (pas de split) car en M2-B1
-    on produit le **pipeline de préparation**, pas un modèle de scoring.
-    Le pipeline sera rejoué tel quel sur tout nouveau lot de données.
     """
     X, _y = load_dataset(data_path)
     pipeline = build_preprocessor()
