@@ -13,7 +13,7 @@ jupyter nbconvert --to notebook --execute notebooks/M2-B1_Tom_audit.ipynb
 python contract_test.py
 ```
  
-> 📦 Le dataset `german_credit_raw.csv` et le complément `german_credit_supplement.csv`
+> Le dataset `german_credit_raw.csv` et le complément `german_credit_supplement.csv`
 > sont déjà dans `data/`. Le pipeline persisté `src/pipeline.joblib` est produit
 > lors de l'exécution du notebook.
  
@@ -40,7 +40,7 @@ M2-B1-pipe-eckmuhl-tom/
 
 ---
 
-## 📋 Verdict rapide
+## Verdict rapide
  
 Voir **[audit.md](audit.md)** pour le verdict complet destiné au DPO Klaus Eichmann.
  
@@ -49,7 +49,7 @@ Voir **[audit.md](audit.md)** pour le verdict complet destiné au DPO Klaus Eich
 | Valeurs atypiques `credit_amount` | 72 outliers IQR |
 | Déséquilibre `foreign_worker` | 963 yes vs 37 no (96,3 % / 3,7 %) |
 | Déséquilibre cible | 70 % bon crédit / 30 % mauvais crédit |
-| DI `foreign_worker` | **0,777** ⚠️ signal (< 0,80) |
-| DI `sex_binary` | 0,896 ✅ pas de signal |
+| DI `foreign_worker` | **0,777** signal (< 0,80) |
+| DI `sex_binary` | 0,896 pas de signal |
  
 ---
